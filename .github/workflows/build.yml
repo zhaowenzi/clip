@@ -37,4 +37,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: electron-app-${{ matrix.os }}
-          path: out/make/*/*.zip
+          path: out/make/**/*.zip
