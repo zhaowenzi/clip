@@ -1,20 +1,27 @@
-import type { Configuration } from 'webpack';
+import type { Configuration } from "webpack";
+import path from "path";
+import { rules } from "./webpack.rules";
+import { plugins } from "./webpack.plugins";
 
-import { rules } from './webpack.rules';
-import { plugins } from './webpack.plugins';
+rules.push({
+  test: /\.(png|jpe?g|gif|svg)$/,
+  type: "asset/resource",
+  generator: {
+    filename: "assets/[hash][ext][query]",
+  },
+});
 
 export const mainConfig: Configuration = {
-  /**
-   * This is the main entry point for your application, it's the first file
-   * that runs in the main process.
-   */
-  entry: './src/index.ts',
-  // Put your normal webpack config below here
+  entry: "./src/index.ts",
   module: {
     rules,
   },
   plugins,
   resolve: {
-    extensions: ['.js', '.ts', '.jsx', '.tsx', '.css', '.json'],
+    extensions: [".js", ".ts", ".jsx", ".tsx", ".css", ".json"],
+  },
+  output: {
+    path: path.resolve(__dirname, ".webpack/main"),
+    filename: "index.js",
   },
 };

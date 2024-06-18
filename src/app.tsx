@@ -5,8 +5,4 @@ import { createRoot } from "react-dom/client";
 import Table from "./components/Table";
 
 const root = createRoot(document.getElementById("root") as HTMLElement);
-root.render(
-  <React.StrictMode>
-    <Table></Table>
-  </React.StrictMode>
-);
+root.render(<Table></Table>);

@@ -16,5 +16,5 @@
       "@/*": ["*"] // 使用 @ 作为 src 目录的别名
     }
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*", "src/global.d.ts"]
 }
