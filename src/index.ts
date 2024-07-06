@@ -27,8 +27,8 @@ if (require("electron-squirrel-startup")) {
 const createWindow = (): void => {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    height: 730,
-    width: 900,
+    height: 870,
+    width: 1000,
     webPreferences: {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
     },
@@ -115,9 +115,9 @@ app.on("activate", () => {
 // code. You can also put them in separate files and import them here.
 ipcMain.handle(
   "get-clipboard-contents",
-  async (event, page: number, pageSize: number) => {
+  async (event, content: string, page: number, pageSize: number) => {
     try {
-      const contents = await getClipboardContents(page, pageSize);
+      const contents = await getClipboardContents(content, page, pageSize);
       return contents;
     } catch (error) {
       console.error("Failed to get clipboard contents:", error);
@@ -129,9 +129,9 @@ ipcMain.handle(
 ipcMain.handle(
   "get-clipboard-total",
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async (event) => {
+  async (event, content: string) => {
     try {
-      const total = await getTotalRecordCount();
+      const total = await getTotalRecordCount(content);
       return total;
     } catch (error) {
       console.error("Failed to get clipboard total:", error);

@@ -39,28 +39,47 @@ export function addRecordContent(
 }
 
 export function getClipboardContents(
+  content: string,
   page: number,
   pageSize: number
 ): Promise<ClipboardRecord[]> {
   return new Promise((resolve, reject) => {
     const offset = (page - 1) * pageSize;
-    db.all(
-      "SELECT * FROM records ORDER BY timestamp DESC LIMIT ? OFFSET ?",
-      [pageSize, offset],
-      (err, rows) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(rows as ClipboardRecord[]);
-        }
+
+    let query: string;
+    let params: any[];
+    if (content) {
+      query =
+        "SELECT * FROM records WHERE content LIKE ? ORDER BY timestamp DESC LIMIT ? OFFSET ?";
+      params = [content, pageSize, offset];
+    } else {
+      query = "SELECT * FROM records ORDER BY timestamp DESC LIMIT ? OFFSET ?";
+      params = [pageSize, offset];
+    }
+
+    db.all(query, params, (err, rows) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(rows as ClipboardRecord[]);
       }
-    );
+    });
   });
 }
 
-export function getTotalRecordCount(): Promise<number> {
+export function getTotalRecordCount(content: string): Promise<number> {
   return new Promise((resolve, reject) => {
-    db.get("SELECT COUNT(*) AS count FROM records", (err, row) => {
+    let query: string;
+    let params: any[];
+    if (content) {
+      query = "SELECT COUNT(*) AS count FROM records WHERE content LIKE ?";
+      params = [content];
+    } else {
+      query = "SELECT COUNT(*) AS count FROM records";
+      params = [];
+    }
+
+    db.get(query, params, (err, row) => {
       if (err) {
         reject(err);
       } else {

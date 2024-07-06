@@ -1,5 +1,5 @@
 import { ClipboardRecord } from "@/types/clipboard";
-import { Modal, Table } from "antd";
+import { Button, Card, Input, Modal, Table, Space, Form } from "antd";
 import type { TableProps } from "antd";
 import { format, parseISO } from "date-fns";
 import React, { useEffect, useRef, useState } from "react";
@@ -18,6 +18,41 @@ export default function Example() {
     height: window.innerHeight,
   });
   const [total, setTotal] = useState<number>(0);
+  const [form] = Form.useForm();
+  const [searchContent, setSearchContent] = useState<string>(null);
+  const [tableLoading, setTableLoading] = useState<boolean>(false);
+
+  const fetchTotal = async (content: string) => {
+    try {
+      const initialTotal = await window.electron.ipcRenderer.invoke(
+        "get-clipboard-total",
+        content
+      );
+      setTotal(initialTotal);
+    } catch (error) {
+      console.log("Failed to fetch clipboard total:", error);
+    }
+  };
+
+  const fetchRecords = async (
+    content: string,
+    page: number,
+    pageSize: number
+  ) => {
+    setTableLoading(true);
+    try {
+      const initialRecords = await window.electron.ipcRenderer.invoke(
+        "get-clipboard-contents",
+        content,
+        page,
+        pageSize
+      );
+      setRecords(initialRecords);
+    } catch (error) {
+      console.error("Failed to fetch clipboard contents:", error);
+    }
+    setTableLoading(false);
+  };
 
   useEffect(() => {
     const handleWindowResize = (size: number[]) => {
@@ -36,35 +71,11 @@ export default function Example() {
   }, []);
 
   useEffect(() => {
-    const fetchTotal = async () => {
-      try {
-        const initialTotal = await window.electron.ipcRenderer.invoke(
-          "get-clipboard-total"
-        );
-        setTotal(initialTotal);
-      } catch (error) {
-        console.log("Failed to fetch clipboard total:", error);
-      }
-    };
-
-    const fetchRecords = async (page: number, pageSize: number) => {
-      try {
-        const initialRecords = await window.electron.ipcRenderer.invoke(
-          "get-clipboard-contents",
-          page,
-          pageSize
-        );
-        setRecords(initialRecords);
-      } catch (error) {
-        console.error("Failed to fetch clipboard contents:", error);
-      }
-    };
-
-    fetchRecords(page, pageSize);
+    fetchRecords(searchContent, page, pageSize);
 
     if (isInitialMount.current) {
       isInitialMount.current = false;
-      fetchTotal();
+      fetchTotal(searchContent);
 
       const handleClipboardChange = (record: ClipboardRecord) => {
         console.log("Clipboard content:", record);
@@ -90,7 +101,7 @@ export default function Example() {
         );
       };
     }
-  }, [page, pageSize]);
+  }, [searchContent, page, pageSize]);
 
   useEffect(() => {
     pageRef.current = page;
@@ -146,19 +157,53 @@ export default function Example() {
     },
   ];
 
+  const onFinish = (values: any) => {
+    setSearchContent(values.content);
+    setPage(1);
+    fetchTotal(values.content);
+    console.log(values);
+  };
+
+  const onReset = () => {
+    form.resetFields();
+  };
+
   return (
     <>
-      <Table
-        pagination={{
-          total: total,
-          current: page,
-          onChange: handlePageChange,
-          showSizeChanger: false,
-          showTotal: (total) => `Total ${total} items`,
-        }}
-        columns={columns}
-        dataSource={records.map((record) => ({ ...record, key: record.id }))}
-      ></Table>
+      <Space direction="vertical" size="middle" style={{ display: "flex" }}>
+        <Card>
+          <Form layout="inline" onFinish={onFinish} form={form}>
+            <Form.Item label="Content" name="content">
+              <Input placeholder="Search Content"></Input>
+            </Form.Item>
+            <Space>
+              <Button onClick={onReset}>Reset</Button>
+              <Form.Item>
+                <Button type="primary" htmlType="submit">
+                  Submit
+                </Button>
+              </Form.Item>
+            </Space>
+          </Form>
+        </Card>
+        <Card>
+          <Table
+            loading={tableLoading}
+            pagination={{
+              total: total,
+              current: page,
+              onChange: handlePageChange,
+              showSizeChanger: false,
+              showTotal: (total) => `Total ${total} items`,
+            }}
+            columns={columns}
+            dataSource={records.map((record) => ({
+              ...record,
+              key: record.id,
+            }))}
+          ></Table>
+        </Card>
+      </Space>
       <Modal
         open={isModalOpen}
         footer={null}
